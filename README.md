@@ -16,4 +16,5 @@ Docker Support: The app is containerized using Docker, making it easy to deploy 
 
 ## Prerequisites
 Python
+
 Docker
