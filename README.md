@@ -5,8 +5,14 @@ This repository contains a Flask-based web application that allows users to uplo
 
 ## Features
 Image Upload: Users can upload images to the application.
+
+
 Question and Answer: Users can ask questions about the uploaded image, and the app will provide answers.
+
+
 Docker Support: The app is containerized using Docker, making it easy to deploy and run anywhere.
+
+
 
 ## Prerequisites
 Python
