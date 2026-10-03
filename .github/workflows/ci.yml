@@ -1,0 +1,29 @@
+name: ci
+on: [push, pull_request]
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: pip install torch --index-url https://download.pytorch.org/whl/cpu
+      - run: pip install -r requirements.txt -r requirements-dev.txt
+      - run: pytest -q
+  docker:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: docker build -t vqa-api .
+      - name: Start the container and wait until it is healthy
+        run: |
+          docker run -d --name vqa -p 8000:8000 vqa-api
+          for i in $(seq 1 60); do curl -sf http://127.0.0.1:8000/health && exit 0; sleep 3; done
+          docker logs vqa; exit 1
+      - name: Ask a question
+        run: |
+          pip install -q pillow
+          python -c "from PIL import Image; Image.new('RGB', (224, 224), 'red').save('red.png')"
+          curl -sf -F "image=@red.png" -F "question=What color is this?" http://127.0.0.1:8000/ask | tee answer.json
+          grep -q '"answer"' answer.json

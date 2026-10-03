@@ -1,40 +1,28 @@
-# syntax=docker/dockerfile:1
+# Visual question answering API: FastAPI + ViLT, CPU-only image.
+FROM python:3.11-slim
 
-# Comments are provided throughout this file to help you get started.
-# If you need more help, visit the Dockerfile reference guide at
-# https://docs.docker.com/engine/reference/builder/
-
-ARG PYTHON_VERSION=3.10.5
-FROM python:${PYTHON_VERSION} as base
-
-# Prevents Python from writing pyc files.
-ENV PYTHONDONTWRITEBYTECODE=1
-
-# Keeps Python from buffering stdout and stderr to avoid situations where
-# the application crashes without emitting any logs due to buffering.
-ENV PYTHONUNBUFFERED=1
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    HF_HOME=/opt/hf \
+    PIP_NO_CACHE_DIR=1
 
 WORKDIR /app
 
-# Install Rust compiler
-RUN curl https://sh.rustup.rs -sSf | bash -s -- -y
-ENV PATH="/root/.cargo/bin:${PATH}"
+# CPU build of PyTorch keeps the image far smaller than the default CUDA wheels.
+COPY requirements.txt .
+RUN pip install torch --index-url https://download.pytorch.org/whl/cpu \
+ && pip install -r requirements.txt
 
+# Bake the model weights into the image so a container starts without a download.
+RUN python -c "from transformers import ViltProcessor, ViltForQuestionAnswering as M; m='dandelin/vilt-b32-finetuned-vqa'; ViltProcessor.from_pretrained(m); M.from_pretrained(m)"
 
-# Download dependencies as a separate step to take advantage of Docker's caching.
-# Leverage a cache mount to /root/.cache/pip to speed up subsequent builds.
-# Leverage a bind mount to requirements.txt to avoid having to copy them into
-# into this layer.
-RUN --mount=type=cache,target=/root/.cache/pip \
-    --mount=type=bind,source=requirements.txt,target=requirements.txt \
-    python -m pip install -r requirements.txt
+COPY main.py model.py ./
+COPY static ./static
 
+RUN useradd --create-home app && chown -R app /app /opt/hf
+USER app
 
-# Copy the source code into the container.
-COPY . .
-
-# Expose the port that the application listens on.
 EXPOSE 8000
-
-# Run the application.
-CMD uvicorn main:app --reload --port 8000 --host 0.0.0.0
+HEALTHCHECK --interval=30s --timeout=5s --start-period=60s \
+  CMD python -c "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health')" || exit 1
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
