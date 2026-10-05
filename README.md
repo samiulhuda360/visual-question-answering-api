@@ -33,6 +33,7 @@ answering on their own photos.
 ## Architecture
 
 ```mermaid
+%%{init: {"theme": "base", "themeVariables": {"primaryColor": "#e6f2ef", "primaryBorderColor": "#2f6f68", "primaryTextColor": "#13302c", "lineColor": "#5f7471", "secondaryColor": "#f3efe6", "tertiaryColor": "#f7f8f6"}}}%%
 flowchart TD
     BR["Browser<br/>drag-and-drop page"] -->|"GET / and POST /ask"| API
     CL["API client<br/>curl or another service"] -->|"POST /ask"| API
@@ -52,6 +53,7 @@ starts without a download.
 ## How it works
 
 ```mermaid
+%%{init: {"theme": "base", "themeVariables": {"primaryColor": "#e6f2ef", "primaryBorderColor": "#2f6f68", "primaryTextColor": "#13302c", "lineColor": "#5f7471", "secondaryColor": "#f3efe6", "tertiaryColor": "#f7f8f6"}}}%%
 sequenceDiagram
     participant C as Browser or API client
     participant A as FastAPI POST /ask
