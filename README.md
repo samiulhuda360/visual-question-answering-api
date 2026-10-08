@@ -5,13 +5,52 @@
 ![Model: ViLT](https://img.shields.io/badge/model-ViLT%20(Hugging%20Face)-yellow)
 ![Docker](https://img.shields.io/badge/docker-ready-2496ED)
 
-**Upload a photo, ask a question about it in plain English, and get the top answers with a confidence score for
-each.** A multimodal AI service: the ViLT vision-and-language transformer served through a FastAPI REST API, with a
-drag-and-drop web page and a Docker image that has the model weights built in. It is for developers who want a small,
+![The web page asking "How many dogs are there?" about a photo of two puppies: the answer is 2 at 92% confidence, with the top five answers and their scores](docs/screenshot.png)
+
+*The web page in use: a photo of two puppies, the question "How many dogs are there?", and the answer "2" with 92%
+confidence. The bars underneath show the other answers it considered and how likely it thought each one was.*
+
+## What it does
+
+You give it a photo and ask a question about it in everyday English, such as "How many dogs are there?" or "What
+colour is the car?". It looks at the picture and answers in a word or two, and tells you how sure it is. Other
+programs can send it photos and questions too, so the same answers can be built into a website or an office system.
+
+## A real-life example
+
+**Mia** volunteers at **Acme Animal Rescue**, where people send in photos of stray animals they have found.
+
+- **Before:** for every photo, Mia opened it, counted the animals, noted their colour and typed it all into the
+  intake log by hand. On busy days the photos piled up and typing mistakes crept into the log.
+- **With this project:** she drops each photo on the web page and asks the same short questions: "How many dogs are
+  there?", "What colour is the dog?", "Is it wearing a collar?". Each answer comes back with a confidence score, and
+  she checks any photo where the score is low.
+- **After:** for the two-puppy photo above, the answer "2" came back at 92% confidence in 272 milliseconds, about a
+  quarter of a second. Mia's job turns from typing every detail into reviewing the answers and the few photos the
+  program is unsure about.
+
+It is best at short, factual answers: counting, colours, yes or no, and naming objects. It does not write long
+descriptions or read long text in a picture.
+
+## How you would use it
+
+1. Someone technical starts the program once, with a single command (see [Getting started](#getting-started)).
+2. Open http://localhost:8000 in your web browser.
+3. Drag a photo onto the left side of the page, or click there to choose one (up to 8 MB).
+4. Type a question, or click one of the example questions.
+5. Read the answer and how sure the program is, plus bars for its next four guesses.
+
+Developers can send the same photo and question from their own software and get the answer back as data; the
+commands are in [Usage](#usage) further down.
+
+## Overview
+
+A multimodal AI service (one that understands pictures and text together): the ViLT vision-and-language transformer
+(an AI model that reads an image and a question at the same time) served through a FastAPI REST API (a web
+interface that other programs can call), with a drag-and-drop web page and a Docker image (a ready-to-run package of
+the app and everything it needs) that has the model weights built in. It is for developers who want a small,
 production-shaped example of serving a vision-language model, and for anyone who wants to try visual question
 answering on their own photos.
-
-![The web page asking "How many dogs are there?" about a photo of two puppies: the answer is 2 at 92% confidence, with the top five answers and their scores](docs/screenshot.png)
 
 ## Key features
 
@@ -19,15 +58,17 @@ answering on their own photos.
   reads the image and the question together.
 - **Top answers with confidence:** five answers by default (`top_k` from 1 to 10), each with its score, so a client can
   decide when to trust the result.
-- **REST API and web UI:** `POST /ask` takes a multipart image and question, `GET /health` is a readiness check,
-  interactive OpenAPI docs are at `/docs`, and a drag-and-drop page with example questions is at `/`.
+- **REST API and web UI:** `POST /ask` takes a multipart image and question, `GET /health` is a readiness check
+  (a quick "are you running?" call), interactive OpenAPI docs (a page that lists every request and lets you try it)
+  are at `/docs`, and a drag-and-drop page with example questions is at `/`.
 - **Input validation:** questions of 2 to 200 characters, an image size cap (8 MB by default) and a clear error for
   files that aren't readable images.
 - **Model loaded once at start-up,** so the first question doesn't wait for it. Every response reports how long the
   model took.
 - **Docker image:** CPU-only PyTorch, model weights downloaded at build time, a non-root user and a health check.
   `docker compose up` starts it.
-- **CI on every push:** API tests with the model mocked, plus a Docker job that builds the image, waits for `/health`
+- **CI on every push** (continuous integration: tests run automatically on every change): API tests with the model mocked
+  (replaced by a stand-in), plus a Docker job that builds the image, waits for `/health`
   and asks a real question.
 
 ## Architecture
